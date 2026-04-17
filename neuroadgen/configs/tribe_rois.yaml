@@ -1,0 +1,101 @@
+# TribeV2 ROI definitions on fsaverage5 mesh (~20k vertices)
+# Vertex indices are derived from HCP MMP1.0 parcellation projected to fsaverage5
+# Use nilearn.datasets.fetch_atlas_destrieux_2009 or HCP parcellation as source
+
+roi_definitions:
+
+  # Primary visual cortex + secondary visual + motion area
+  visual_engagement:
+    description: "V1, V2, MT+ complex — drives vivid dynamic visual perception"
+    atlas: "HCP_MMP1.0"
+    regions:
+      - "V1"
+      - "V2"
+      - "V3"
+      - "MT"
+      - "MST"
+      - "V3A"
+      - "V3B"
+    hemisphere: "both"
+    mask_path: "configs/masks/v1_v2_mt.npy"
+    generation_script: "scripts/generate_roi_masks.py"
+
+  # Valence and emotional processing network
+  emotional_valence:
+    description: "vmPFC + amygdala — mediates emotional resonance and valence"
+    atlas: "Destrieux"
+    regions:
+      - "G_and_S_cingul-Mid-Ant"  # vmPFC proxy via cingulate
+      - "G_orbital"                 # OFC / vmPFC
+      - "G_rectus"                  # vmPFC
+      - "Pole_temporal"             # amygdala-adjacent temporal pole
+    hemisphere: "both"
+    mask_path: "configs/masks/vmpfc_amygdala.npy"
+    note: "Amygdala is subcortical; cortical surface proxy used for fsaverage5 compatibility"
+
+  # Attention and salience network
+  attention_capture:
+    description: "TPJ + IPS — drives attentional salience and capture"
+    atlas: "HCP_MMP1.0"
+    regions:
+      - "TPOJ1"   # Temporo-parietal junction
+      - "TPOJ2"
+      - "TPOJ3"
+      - "IP0"     # Intraparietal sulcus
+      - "IP1"
+      - "IP2"
+      - "AIP"
+    hemisphere: "both"
+    mask_path: "configs/masks/tpj_ips.npy"
+
+  # Language and narrative comprehension network
+  narrative_comprehension:
+    description: "Broca + Wernicke + DMN — narrative absorption and story comprehension"
+    atlas: "HCP_MMP1.0"
+    regions:
+      # Broca's area
+      - "44"
+      - "45"
+      - "IFJa"
+      - "IFJp"
+      # Wernicke's area / superior temporal
+      - "STSdp"
+      - "STSvp"
+      - "A5"
+      # Default Mode Network
+      - "PCC"
+      - "RSC"
+      - "PCV"
+      - "7m"
+    hemisphere: "both"
+    mask_path: "configs/masks/broca_wernicke_dmn.npy"
+
+  # Memory encoding network
+  memory_encoding:
+    description: "Parahippocampal cortex + PHC — episodic memory encoding and memorability"
+    atlas: "HCP_MMP1.0"
+    regions:
+      - "PeEc"   # perirhinal/entorhinal cortex
+      - "TF"     # parahippocampal TF area
+      - "PHA1"   # parahippocampal area 1
+      - "PHA2"
+      - "PHA3"
+    hemisphere: "both"
+    mask_path: "configs/masks/hippocampal.npy"
+    note: "Hippocampus itself is subcortical; parahippocampal cortex used as surface proxy"
+
+# Composite reward weights (should sum to 1.0)
+default_composite_weights:
+  visual_engagement: 0.4
+  emotional_valence: 0.3
+  attention_capture: 0.1
+  narrative_comprehension: 0.1
+  memory_encoding: 0.2
+
+# Hemodynamic response function parameters
+hrf:
+  lag_seconds: 5
+  peak_seconds: 6
+  undershoot_ratio: 0.35
+  usable_window_start_sec: 5
+  usable_window_end_sec: 15

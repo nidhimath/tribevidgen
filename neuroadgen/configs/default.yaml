@@ -1,0 +1,82 @@
+video_model:
+  name: "THUDM/CogVideoX-5b"  # use Wan-AI/Wan2.1-T2V-14B on Linux+GPU
+  resolution: 480
+  fps: 8
+  duration_frames: 120
+  inference_steps: 50
+  guidance_scale: 7.5
+  dtype: "fp32"  # bf16/fp16 not supported on MPS; use bf16 on Linux+CUDA
+  fallback_models:
+    - "hunyuanvideo-community/HunyuanVideo"
+    - "THUDM/CogVideoX-5b"
+
+lora:
+  rank: 64
+  alpha: 64
+  target_modules: ["to_q", "to_k", "to_v", "to_out.0"]
+  dropout: 0.1
+
+finetune:
+  train_steps: 2000
+  batch_size: 2
+  learning_rate: 1.0e-4
+  gradient_accumulation: 4
+  save_every: 500
+  warmup_steps: 100
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+
+reward_opt:
+  n_steps: 30
+  batch_size: 2
+  learning_rate: 1.0e-5
+  truncated_bptt_k: 5
+  kl_penalty_weight: 0.01
+  grad_clip_norm: 1.0
+  # options: vjepa2_proxy | reinforce | surrogate_mlp
+  differentiability_strategy: "vjepa2_proxy"
+  vjepa2_model_id: "facebook/vjepa2-vitl-fpc64-256"
+  surrogate_mlp_hidden: [512, 256, 128]
+
+tribe:
+  cache_folder: "./cache"
+  model_id: "facebook/tribev2"
+  min_input_duration_sec: 15
+  hemodynamic_lag_sec: 5
+  prediction_end_sec: 15
+
+rois:
+  visual_engagement:
+    vertices_mask_path: "configs/masks/v1_v2_mt.npy"
+    weight: 0.4
+  emotional_valence:
+    vertices_mask_path: "configs/masks/vmpfc_amygdala.npy"
+    weight: 0.3
+  attention_capture:
+    vertices_mask_path: "configs/masks/tpj_ips.npy"
+    weight: 0.1
+  narrative_comprehension:
+    vertices_mask_path: "configs/masks/broca_wernicke_dmn.npy"
+    weight: 0.1
+  memory_encoding:
+    vertices_mask_path: "configs/masks/hippocampal.npy"
+    weight: 0.2
+
+seedance:
+  api_url: "https://fal.run/fal-ai/seedance-2-0-t2v"
+  timeout: 300
+
+wandb:
+  project: "neuroadgen"
+  entity: null
+  log_every: 10
+
+paths:
+  cache_dir: "./cache"
+  outputs_dir: "./outputs"
+  checkpoints_dir: "./checkpoints"
+
+hardware:
+  gradient_checkpointing: true
+  cpu_offload: false
+  mixed_precision: "bf16"

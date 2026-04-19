@@ -71,8 +71,9 @@ class VideoGenerator(nn.Module):
     # ------------------------------------------------------------------
 
     def _detect_backend(self, model_id: str) -> str:
-        mid = model_id.lower()
-        if "wan" in mid:
+        # Also handle local cache paths like ./cache/wan2.1-1.3b
+        mid = model_id.lower().replace("\\", "/").split("/")[-1]
+        if "wan" in mid or "wan" in model_id.lower():
             return "wan"
         if "hunyuan" in mid:
             return "hunyuan"
@@ -379,6 +380,87 @@ class VideoGenerator(nn.Module):
         # HunyuanVideo uses the same denoising pattern; delegate to CogVideo runner
         # after adapting the pipeline references — override self.pipe references inline
         return self._run_cogvideo(**kwargs)
+
+
+# ---------------------------------------------------------------------------
+# CogVideoX fal.ai API generator — fast path (~30-60s per video)
+# ---------------------------------------------------------------------------
+
+class CogVideoXAPIGenerator:
+    """
+    Generates video via the fal.ai CogVideoX-5b hosted endpoint.
+
+    No local GPU needed for generation. TribeV2 scoring still runs locally.
+    Reward gradient optimisation is NOT available through this path.
+
+    Setup: pip install fal-client && export FAL_KEY="your_key"
+    Get a key at: https://fal.ai/dashboard/keys
+    """
+
+    ENDPOINT = "fal-ai/cogvideox-5b"
+
+    def __init__(self, api_key: Optional[str] = None, timeout: int = 300) -> None:
+        self.api_key = api_key or os.environ.get("FAL_KEY", "")
+        self.timeout = timeout
+        if not self.api_key:
+            raise RuntimeError(
+                "FAL_KEY not set. Export it with: export FAL_KEY='your_key'\n"
+                "Get a key at: https://fal.ai/dashboard/keys"
+            )
+
+    def generate(
+        self,
+        prompt: str,
+        num_inference_steps: int = 50,
+        guidance_scale: float = 7.0,
+        num_frames: int = 49,
+        fps: int = 8,
+        output_path: Optional[str] = None,
+    ) -> str:
+        """
+        Generate a video via fal.ai API and save it locally.
+
+        Returns
+        -------
+        str : local path to the downloaded MP4 file.
+        """
+        try:
+            import fal_client
+        except ImportError:
+            raise RuntimeError("Run: pip install fal-client")
+
+        os.environ["FAL_KEY"] = self.api_key
+        logger.info("Submitting CogVideoX generation to fal.ai (endpoint: %s)...", self.ENDPOINT)
+
+        result = fal_client.subscribe(
+            self.ENDPOINT,
+            arguments={
+                "prompt": prompt,
+                "num_inference_steps": num_inference_steps,
+                "guidance_scale": guidance_scale,
+                "num_frames": num_frames,
+            },
+            with_logs=True,
+            on_queue_update=lambda u: logger.info("fal.ai: %s", getattr(u, "logs", u)),
+        )
+
+        video_url = result["video"]["url"]
+        logger.info("Video generated. Downloading from: %s", video_url)
+
+        if output_path is None:
+            import tempfile
+            tmp = tempfile.NamedTemporaryFile(suffix=".mp4", delete=False)
+            output_path = tmp.name
+            tmp.close()
+
+        self._download(video_url, output_path)
+        logger.info("Video saved to: %s", output_path)
+        return output_path
+
+    def _download(self, url: str, dest: str) -> None:
+        import urllib.request
+        Path(dest).parent.mkdir(parents=True, exist_ok=True)
+        urllib.request.urlretrieve(url, dest)
 
 
 # ---------------------------------------------------------------------------

@@ -102,7 +102,7 @@ def save_video(video: torch.Tensor, path: str, fps: int = 8) -> str:
 # Main generate_ad function
 # ---------------------------------------------------------------------------
 
-def generate_ad(brief: dict, config_path: str | None = None) -> dict:
+def generate_ad(brief: dict, config_path: str | None = None, use_api: bool = True) -> dict:
     """
     Full end-to-end NeuroAdGen pipeline.
 
@@ -143,44 +143,44 @@ def generate_ad(brief: dict, config_path: str | None = None) -> dict:
     # ------------------------------------------------------------------
     # Step 2: Load models
     # ------------------------------------------------------------------
-    logger.info("Step 2: Loading video generation model...")
-    from neuroadgen.models.video_gen import VideoGenerator
     from neuroadgen.models.tribe_reward import TribeReward
-    from neuroadgen.models.lora_adapter import load_lora_checkpoint
-    from neuroadgen.training.reward_optimize import RewardOptimizer
     from neuroadgen.visualization.brain_heatmap import generate_brain_heatmap
 
-    generator = VideoGenerator(
-        model_id=cfg["video_model"]["name"],
-        dtype=dtype,
-        device=device,
-        cache_dir=cfg["paths"]["cache_dir"],
-        enable_gradient_checkpointing=cfg["hardware"]["gradient_checkpointing"],
-        truncated_bptt_k=cfg["reward_opt"]["truncated_bptt_k"],
-    )
-
-    # Load LoRA checkpoint if available
-    lora_ckpt_dir = cfg["paths"]["checkpoints_dir"]
-    latest_ckpt = _find_latest_checkpoint(lora_ckpt_dir)
-    if latest_ckpt:
-        logger.info("Loading LoRA checkpoint: %s", latest_ckpt)
-        generator.pipe.transformer = load_lora_checkpoint(
-            generator.pipe.transformer, latest_ckpt, device=device
-        )
+    if use_api:
+        logger.info("Step 2: Using fal.ai CogVideoX API for video generation (fast path).")
+        from neuroadgen.models.video_gen import CogVideoXAPIGenerator
+        api_generator = CogVideoXAPIGenerator()
     else:
-        logger.info("No LoRA checkpoint found — using base model weights.")
+        logger.info("Step 2: Loading local video generation model...")
+        from neuroadgen.models.video_gen import VideoGenerator
+        from neuroadgen.models.lora_adapter import load_lora_checkpoint
+        from neuroadgen.training.reward_optimize import RewardOptimizer
 
-    # Reference model for KL penalty (frozen copy)
-    ref_generator = VideoGenerator(
-        model_id=cfg["video_model"]["name"],
-        dtype=dtype,
-        device=device,
-        cache_dir=cfg["paths"]["cache_dir"],
-    )
-    if latest_ckpt:
-        ref_generator.pipe.transformer = load_lora_checkpoint(
-            ref_generator.pipe.transformer, latest_ckpt, device=device
+        generator = VideoGenerator(
+            model_id=cfg["video_model"]["name"],
+            dtype=dtype,
+            device=device,
+            cache_dir=cfg["paths"]["cache_dir"],
+            enable_gradient_checkpointing=cfg["hardware"]["gradient_checkpointing"],
+            truncated_bptt_k=cfg["reward_opt"]["truncated_bptt_k"],
         )
+        lora_ckpt_dir = cfg["paths"]["checkpoints_dir"]
+        latest_ckpt = _find_latest_checkpoint(lora_ckpt_dir)
+        if latest_ckpt:
+            logger.info("Loading LoRA checkpoint: %s", latest_ckpt)
+            generator.pipe.transformer = load_lora_checkpoint(
+                generator.pipe.transformer, latest_ckpt, device=device
+            )
+        ref_generator = VideoGenerator(
+            model_id=cfg["video_model"]["name"],
+            dtype=dtype,
+            device=device,
+            cache_dir=cfg["paths"]["cache_dir"],
+        )
+        if latest_ckpt:
+            ref_generator.pipe.transformer = load_lora_checkpoint(
+                ref_generator.pipe.transformer, latest_ckpt, device=device
+            )
 
     # Build ROI config filtered to requested target regions
     target_rois = brief.get("target_brain_regions", list(cfg["rois"].keys()))
@@ -204,57 +204,61 @@ def generate_ad(brief: dict, config_path: str | None = None) -> dict:
     )
 
     # ------------------------------------------------------------------
-    # Step 3: Generate initial video
+    # Step 3: Generate video
     # ------------------------------------------------------------------
-    logger.info("Step 3: Generating initial video...")
-    with torch.no_grad():
-        video_init, _ = generator.generate(
+    trajectory = []
+    if use_api:
+        logger.info("Step 3: Generating video via fal.ai API...")
+        final_video_path = str(output_dir / f"{run_id}_optimized.mp4")
+        api_generator.generate(
             prompt=prompt,
             num_inference_steps=cfg["video_model"]["inference_steps"],
             guidance_scale=cfg["video_model"]["guidance_scale"],
-            height=cfg["video_model"]["resolution"],
-            width=cfg["video_model"]["resolution"] * 16 // 9,
             num_frames=cfg["video_model"]["duration_frames"],
+            fps=cfg["video_model"]["fps"],
+            output_path=final_video_path,
         )
+        init_video_path = final_video_path  # no separate initial video in API mode
+        logger.info("Video saved: %s", final_video_path)
+    else:
+        logger.info("Step 3: Generating initial video locally...")
+        with torch.no_grad():
+            video_init, _ = generator.generate(
+                prompt=prompt,
+                num_inference_steps=cfg["video_model"]["inference_steps"],
+                guidance_scale=cfg["video_model"]["guidance_scale"],
+                height=cfg["video_model"]["resolution"],
+                width=cfg["video_model"]["resolution"] * 16 // 9,
+                num_frames=cfg["video_model"]["duration_frames"],
+            )
+        init_video_path = str(output_dir / f"{run_id}_initial.mp4")
+        save_video(video_init, init_video_path, fps=cfg["video_model"]["fps"])
 
-    init_video_path = str(output_dir / f"{run_id}_initial.mp4")
-    save_video(video_init, init_video_path, fps=cfg["video_model"]["fps"])
-    logger.info("Initial video saved: %s", init_video_path)
-
-    # ------------------------------------------------------------------
-    # Step 4: Reward optimisation loop
-    # ------------------------------------------------------------------
-    logger.info("Step 4: Running reward optimisation (%d steps)...", cfg["reward_opt"]["n_steps"])
-    optimizer = RewardOptimizer(
-        generator=generator,
-        tribe_reward=tribe_reward,
-        ref_generator=ref_generator,
-        cfg=cfg,
-        device=device,
-    )
-
-    trajectory = optimizer.optimise(
-        prompts=[prompt],
-        roi_weights=roi_weights_override or None,
-    )
-
-    # ------------------------------------------------------------------
-    # Step 5: Generate final optimised video
-    # ------------------------------------------------------------------
-    logger.info("Step 5: Generating final optimised video...")
-    with torch.no_grad():
-        video_final, _ = generator.generate(
-            prompt=prompt,
-            num_inference_steps=cfg["video_model"]["inference_steps"],
-            guidance_scale=cfg["video_model"]["guidance_scale"],
-            height=cfg["video_model"]["resolution"],
-            width=cfg["video_model"]["resolution"] * 16 // 9,
-            num_frames=cfg["video_model"]["duration_frames"],
+        # ------------------------------------------------------------------
+        # Step 4: Reward optimisation (local only)
+        # ------------------------------------------------------------------
+        logger.info("Step 4: Running reward optimisation (%d steps)...", cfg["reward_opt"]["n_steps"])
+        optimizer = RewardOptimizer(
+            generator=generator,
+            tribe_reward=tribe_reward,
+            ref_generator=ref_generator,
+            cfg=cfg,
+            device=device,
         )
+        trajectory = optimizer.optimise(prompts=[prompt], roi_weights=roi_weights_override or None)
 
-    final_video_path = str(output_dir / f"{run_id}_optimized.mp4")
-    save_video(video_final, final_video_path, fps=cfg["video_model"]["fps"])
-    logger.info("Optimised video saved: %s", final_video_path)
+        with torch.no_grad():
+            video_final, _ = generator.generate(
+                prompt=prompt,
+                num_inference_steps=cfg["video_model"]["inference_steps"],
+                guidance_scale=cfg["video_model"]["guidance_scale"],
+                height=cfg["video_model"]["resolution"],
+                width=cfg["video_model"]["resolution"] * 16 // 9,
+                num_frames=cfg["video_model"]["duration_frames"],
+            )
+        final_video_path = str(output_dir / f"{run_id}_optimized.mp4")
+        save_video(video_final, final_video_path, fps=cfg["video_model"]["fps"])
+        logger.info("Optimised video saved: %s", final_video_path)
 
     # ------------------------------------------------------------------
     # Step 6: Final TribeV2 scoring (black-box, full prediction)

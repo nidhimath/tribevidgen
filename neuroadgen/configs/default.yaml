@@ -1,9 +1,9 @@
 video_model:
-  name: "THUDM/CogVideoX-5b"  # use Wan-AI/Wan2.1-T2V-14B on Linux+GPU
+  name: "Wan-AI/Wan2.1-T2V-1.3B"  # fast + free locally; switch to THUDM/CogVideoX-5b or Wan-AI/Wan2.1-T2V-14B on Linux+GPU
   resolution: 480
   fps: 8
   duration_frames: 120
-  inference_steps: 50
+  inference_steps: 20  # 20 is fast + good quality; bump to 50 for final renders
   guidance_scale: 7.5
   dtype: "fp32"  # bf16/fp16 not supported on MPS; use bf16 on Linux+CUDA
   fallback_models:

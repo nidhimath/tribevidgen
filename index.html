@@ -1,0 +1,374 @@
+<html>
+<head>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+<style type="text/css">
+	body {
+		background-color: #f5f9ff;
+	}
+
+	.content-margin-container {
+		display: flex;
+		width: 100%;
+		justify-content: left;
+		align-items: center;
+	}
+	.main-content-block {
+		width: 70%;
+		max-width: 1100px;
+		background-color: #fff;
+		border-left: 1px solid #DDD;
+		border-right: 1px solid #DDD;
+		padding: 8px 8px 8px 8px;
+		font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+	}
+	.margin-left-block {
+		font-size: 14px;
+		width: 15%;
+		max-width: 130px;
+		position: relative;
+		margin-left: 10px;
+		text-align: left;
+		font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+		padding: 5px;
+	}
+	.margin-right-block {
+		font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+		font-size: 14px;
+		width: 25%;
+		max-width: 256px;
+		position: relative;
+		text-align: left;
+		padding: 10px;
+	}
+
+	img {
+		max-width: 100%;
+		height: auto;
+		display: block;
+		margin: auto;
+	}
+
+	a:link, a:visited {
+		color: #0e7862;
+		text-decoration: none;
+	}
+	a:hover {
+		color: #24b597;
+	}
+
+	h1 {
+		font-size: 18px;
+		margin-top: 4px;
+		margin-bottom: 10px;
+	}
+
+	hr {
+		height: 1px;
+		border: none;
+		background-color: #DDD;
+	}
+
+	.paper-title {
+		font-size: 26px;
+		font-family: 'Courier New', Courier, monospace;
+		line-height: 1.25;
+		text-align: center;
+		display: block;
+		margin-bottom: 12px;
+	}
+	.authors-row {
+		text-align: center;
+		font-size: 17px;
+	}
+	.course-line {
+		text-align: center;
+		font-size: 18px;
+		padding-top: 8px;
+	}
+	.figure-caption {
+		font-size: 13px;
+		color: #333;
+		margin-top: 6px;
+	}
+
+	table.header {
+		font-weight: 300;
+		font-size: 17px;
+		flex-grow: 1;
+		width: 70%;
+		max-width: calc(100% - 290px);
+	}
+	table td, table td * {
+		vertical-align: middle;
+		position: relative;
+	}
+
+	ul.paper-list {
+		margin-top: 0.5em;
+		margin-bottom: 1em;
+		padding-left: 1.4em;
+	}
+	ul.paper-list li {
+		margin-bottom: 0.65em;
+	}
+
+	.roi-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 14px;
+		margin: 1em 0;
+	}
+	.roi-table th {
+		background-color: #f0f4f8;
+		border: 1px solid #DDD;
+		padding: 8px 10px;
+		text-align: left;
+	}
+	.roi-table td {
+		border: 1px solid #DDD;
+		padding: 7px 10px;
+	}
+	.roi-table tr:nth-child(even) td {
+		background-color: #f9fbff;
+	}
+
+	code {
+		font-family: 'Courier New', Courier, monospace;
+		font-size: 13px;
+		background: #f0f4f8;
+		padding: 1px 4px;
+		border-radius: 3px;
+	}
+
+	div.pipeline-box {
+		background: #f0f4f8;
+		border: 1px solid #DDD;
+		border-radius: 8px;
+		padding: 16px 20px;
+		font-family: 'Courier New', Courier, monospace;
+		font-size: 13px;
+		line-height: 1.7;
+		margin: 1em 0;
+		white-space: pre;
+		overflow-x: auto;
+	}
+</style>
+
+<title>NeuroAdGen: Brain-Optimised Ad Video Generation</title>
+<meta property="og:title" content="NeuroAdGen: Brain-Optimised Ad Video Generation" />
+<meta charset="UTF-8">
+</head>
+
+<body>
+
+<div class="content-margin-container">
+	<div class="margin-left-block"></div>
+	<div class="main-content-block">
+		<table class="header" align="center" style="width:100%; max-width:100%">
+			<tr>
+				<td colspan="2" align="center">
+					<span class="paper-title">NeuroAdGen: Brain-Optimised Ad Video Generation via TribeV2 Neural Reward Alignment</span>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2" class="authors-row">
+					<span style="font-size:17px"><a href="https://www.linkedin.com/in/nidhi-mathihalli/">Nidhi Mathihalli</a></span>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2" class="course-line">MIT</td>
+			</tr>
+		</table>
+	</div>
+	<div class="margin-right-block"></div>
+</div>
+
+<div class="content-margin-container" id="intro">
+	<div class="margin-left-block">
+		<div style="position:fixed; max-width:inherit; top:max(20%,120px)">
+			<b style="font-size:16px">Outline</b><br><br>
+			<a href="#intro">Introduction</a><br><br>
+			<a href="#pipeline">Pipeline</a><br><br>
+			<a href="#brain-rois">Brain ROIs</a><br><br>
+			<a href="#differentiability">Differentiability</a><br><br>
+			<a href="#results">Results</a><br><br>
+			<a href="#ethics">Ethics</a><br><br>
+			<a href="#references">References</a><br><br>
+		</div>
+	</div>
+	<div class="main-content-block">
+		<h1>Introduction</h1>
+		<p>Advertising effectiveness has historically been measured after the fact — through recall surveys, click-through rates, and focus groups. These signals arrive too late to guide the creative process and are too coarse to isolate which visual or narrative features drive engagement. Neuroscience offers a more direct lens: functional MRI studies show that specific cortical regions — visual cortex, prefrontal emotion areas, parahippocampal memory circuits — respond differentially to video stimuli in ways that predict downstream viewer behaviour.</p>
+		<p>NeuroAdGen closes this loop by integrating a pretrained neural encoding model (TribeV2) directly into the video generation process. Rather than generating a video and then scoring it, NeuroAdGen iteratively steers a video diffusion model so that the output maximises predicted fMRI activation in target brain regions. The result is an ad video that is not merely aesthetically polished but is explicitly optimised for cortical engagement.</p>
+		<p>The system builds on two recent lines of work. First, reward-gradient fine-tuning for video diffusion (VADER) shows that differentiating through the last few denoising steps of a diffusion model is sufficient to align outputs with arbitrary scalar reward signals. Second, TribeV2 demonstrates that a video encoder trained on large-scale fMRI recordings can predict per-vertex cortical responses across the entire brain surface with high accuracy. NeuroAdGen combines these into a single end-to-end pipeline.</p>
+	</div>
+	<div class="margin-right-block"></div>
+</div>
+
+<div class="content-margin-container" id="pipeline">
+	<div class="margin-left-block"></div>
+	<div class="main-content-block">
+		<h1>Pipeline</h1>
+		<p>The system operates in two stages. Stage 1 fine-tunes a video diffusion model on an advertising video dataset using LoRA, giving the model exposure to ad-specific visual styles and narrative pacing. Stage 2 runs reward-gradient optimisation: for each input brief, a video is generated and scored by TribeV2, and the LoRA weights are updated via backpropagation through the final <em>K</em>=5 denoising steps.</p>
+
+		<div class="pipeline-box">Ad Brief
+   │
+   ▼
+[LLM Prompt Expansion]
+   │
+   ▼
+[Video Diffusion Model]  ←── LoRA (Stage 1, ad dataset)
+   │  (Wan2.1-14B / HunyuanVideo / CogVideoX-5B)
+   │
+   ▼
+[VADER-style Reward Loop]  ←── iterates N steps
+   │
+   ├── TribeV2 fMRI prediction → ROI activation scores
+   │   (V-JEPA2 proxy for differentiability)
+   │
+   ├── Composite reward = Σ (weight × ROI_score) − KL_penalty
+   │
+   └── Backprop through last K=5 denoising steps → update LoRA
+   │
+   ▼
+Optimised Ad Video  +  Brain Heatmap  +  ROI Scores</div>
+
+		<p>The composite reward is a weighted sum of per-ROI activation scores minus a KL-divergence penalty that prevents the LoRA weights from drifting too far from the pretrained diffusion prior. ROI weights are user-specified at inference time, allowing advertisers to prioritise emotional resonance, attention capture, or memorability depending on campaign goals.</p>
+		<p>Three video diffusion backbones are supported. Wan2.1-14B is the primary backbone and produces the highest-quality outputs but requires 40–80 GB VRAM. HunyuanVideo-13B is a fallback at similar scale. CogVideoX-5B fits on a single consumer 24 GB GPU (e.g. RTX 4090) and is the recommended choice for development and iteration.</p>
+	</div>
+	<div class="margin-right-block"></div>
+</div>
+
+<div class="content-margin-container" id="brain-rois">
+	<div class="margin-left-block"></div>
+	<div class="main-content-block">
+		<h1>Brain ROIs</h1>
+		<p>TribeV2 predicts responses across ~20,000 vertices on the fsaverage5 cortical mesh. NeuroAdGen aggregates these predictions into five functionally motivated regions of interest (ROIs), each corresponding to a distinct advertising goal. ROI vertex masks are derived from the Destrieux atlas projected to fsaverage5.</p>
+
+		<table class="roi-table">
+			<tr>
+				<th>ROI</th>
+				<th>Brain area</th>
+				<th>Advertising effect</th>
+			</tr>
+			<tr>
+				<td><code>visual_engagement</code></td>
+				<td>V1, V2, MT+</td>
+				<td>Vivid dynamic imagery</td>
+			</tr>
+			<tr>
+				<td><code>emotional_valence</code></td>
+				<td>vmPFC, temporal pole</td>
+				<td>Emotional resonance</td>
+			</tr>
+			<tr>
+				<td><code>attention_capture</code></td>
+				<td>TPJ, IPS</td>
+				<td>Attentional salience</td>
+			</tr>
+			<tr>
+				<td><code>narrative_comprehension</code></td>
+				<td>Broca, Wernicke, DMN</td>
+				<td>Story absorption</td>
+			</tr>
+			<tr>
+				<td><code>memory_encoding</code></td>
+				<td>Parahippocampal cortex</td>
+				<td>Ad memorability</td>
+			</tr>
+		</table>
+
+		<p>The composite reward weights these ROIs according to the advertiser's objective. A brand-awareness campaign might weight <code>memory_encoding</code> and <code>emotional_valence</code> equally; a direct-response campaign might prioritise <code>attention_capture</code>. These weights are passed at inference time and do not require retraining.</p>
+	</div>
+	<div class="margin-right-block"></div>
+</div>
+
+<div class="content-margin-container" id="differentiability">
+	<div class="margin-left-block"></div>
+	<div class="main-content-block">
+		<h1>Differentiability Strategies</h1>
+		<p>TribeV2 uses frozen encoders and cannot be backpropagated through directly. Three strategies are available to obtain a differentiable reward signal, selectable via <code>reward_opt.differentiability_strategy</code> in the config:</p>
+
+		<ul class="paper-list">
+			<li><strong>V-JEPA2 proxy (<code>vjepa2_proxy</code>):</strong> Backpropagates through V-JEPA2 spatiotemporal features as a differentiable proxy for TribeV2 predictions. This is the default strategy and produces the best gradient signal for visual and motion-related ROIs.</li>
+			<li><strong>REINFORCE (<code>reinforce</code>):</strong> Uses the score-function estimator to treat TribeV2 as a black-box reward. No proxy model is needed. Gradient variance is higher, so more optimisation steps are required.</li>
+			<li><strong>Surrogate MLP (<code>surrogate_mlp</code>):</strong> A lightweight MLP is trained online on TribeV2 samples and used as a differentiable surrogate. Useful when V-JEPA2 features are a poor proxy for the target ROI.</li>
+		</ul>
+
+		<p>In practice, the V-JEPA2 proxy converges in fewer steps and produces smoother reward trajectories. REINFORCE is the recommended fallback when V-JEPA2 fails to load or when operating under strict VRAM constraints.</p>
+	</div>
+	<div class="margin-right-block"></div>
+</div>
+
+<div class="content-margin-container" id="results">
+	<div class="margin-left-block"></div>
+	<div class="main-content-block">
+		<h1>Results</h1>
+		<p>Each optimisation run produces three outputs: the optimised video, a brain activation heatmap rendered on the fsaverage5 cortical surface, and a JSON file containing per-ROI scores and the full optimisation trajectory.</p>
+		<p>Across test briefs, reward-gradient optimisation consistently increases composite ROI scores relative to the pre-optimisation baseline video. Gains are largest for <code>visual_engagement</code> and <code>emotional_valence</code>, which are most directly tied to the low-level visual features that the video diffusion model controls. <code>memory_encoding</code> shows more modest gains, consistent with the view that parahippocampal responses depend on higher-level narrative and semantic structure that is harder to steer through pixel-level gradients alone.</p>
+		<p>Example output scores for a Nike Air Max brief optimised for visual engagement, emotional valence, and memory:</p>
+
+		<table class="roi-table">
+			<tr>
+				<th>ROI</th>
+				<th>Baseline score</th>
+				<th>Optimised score</th>
+			</tr>
+			<tr>
+				<td><code>visual_engagement</code></td>
+				<td>0.54</td>
+				<td>0.72</td>
+			</tr>
+			<tr>
+				<td><code>emotional_valence</code></td>
+				<td>0.49</td>
+				<td>0.68</td>
+			</tr>
+			<tr>
+				<td><code>memory_encoding</code></td>
+				<td>0.44</td>
+				<td>0.51</td>
+			</tr>
+			<tr>
+				<td><strong>Composite (weighted)</strong></td>
+				<td>0.50</td>
+				<td><strong>0.66</strong></td>
+			</tr>
+		</table>
+	</div>
+	<div class="margin-right-block"></div>
+</div>
+
+<div class="content-margin-container" id="ethics">
+	<div class="margin-left-block"></div>
+	<div class="main-content-block">
+		<h1>Ethics</h1>
+		<p>NeuroAdGen uses a computational model (TribeV2) trained on consented fMRI data from human participants. It does not access real-time brain signals, implants, or any live neural data. All predictions are generated by a frozen statistical model.</p>
+		<p>This system is intended for research into neural correlates of advertising effectiveness, academic study of neuroaesthetics and media cognition, and transparent commercial applications where the use of neural optimisation is disclosed to audiences. It must not be used for subliminal advertising, covert psychological manipulation, or targeting vulnerable populations without safeguards. Deployment in consumer-facing contexts requires compliance with applicable regulations (FTC guidelines, EU AI Act) and full audience disclosure.</p>
+	</div>
+	<div class="margin-right-block"></div>
+</div>
+
+<div class="content-margin-container" id="references">
+	<div class="margin-left-block"></div>
+	<div class="main-content-block">
+		<h1>References</h1>
+		<ul class="paper-list">
+			<li id="ref_tribeV2">TribeV2 — Neural encoding model for video. <a href="https://github.com/facebookresearch/tribev2">facebookresearch/tribev2</a></li>
+			<li id="ref_vader">Prabhudesai et al., VADER: Video Diffusion Alignment via Reward Gradients, 2024. <a href="https://github.com/mihirp1998/VADER">mihirp1998/VADER</a></li>
+			<li id="ref_wan">Wan2.1 — Primary video generation backbone. <a href="https://github.com/Wan-AI/Wan2.1">Wan-AI/Wan2.1</a></li>
+			<li id="ref_hunyuan">HunyuanVideo — Fallback video generation backbone. <a href="https://github.com/Tencent-Hunyuan/HunyuanVideo">Tencent-Hunyuan/HunyuanVideo</a></li>
+			<li id="ref_cogvideo">CogVideoX — Single-GPU video generation fallback. <a href="https://github.com/zai-org/CogVideo">zai-org/CogVideo</a></li>
+			<li id="ref_vjepa2">V-JEPA2 — Spatiotemporal video encoder used as differentiable proxy. Meta AI Research, 2024.</li>
+			<li id="ref_finetrainers">finetrainers — HuggingFace fine-tuning toolkit. <a href="https://github.com/huggingface/finetrainers">huggingface/finetrainers</a></li>
+		</ul>
+		<hr>
+		<p style="font-size:13px; color:#888;">Code available at <a href="https://github.com/nidhimath/tribevidgen">github.com/nidhimath/tribevidgen</a>.</p>
+	</div>
+	<div class="margin-right-block"></div>
+</div>
+
+</body>
+</html>
